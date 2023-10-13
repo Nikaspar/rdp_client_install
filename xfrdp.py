@@ -1,4 +1,3 @@
-import configparser
 import locale
 import os
 import sys
@@ -10,8 +9,8 @@ class HelpCall(Exception):
 
 class App:
     arguments: dict[str, str]
-    key_list: list[str] = ['-s', '-h', '-n', '-p']
-    install_path = os.path.join('etc', 'profile.d')
+    key_list: list[str] = ['-s', '-n', '-p']
+    install_path = os.path.join(os.sep, 'etc', 'profile.d')
     config_path = os.path.join(install_path, 'xfrdp.ini')
     script_path = os.path.join(install_path, 'xfrdp.sh')
     
@@ -20,7 +19,8 @@ class App:
         pass
 
     def set_args(self, args: list[str]):
-        args = args
+        args = args[1:]
+
         try:
             self.__check_syntax(args)
         except (SyntaxError, HelpCall) as e:
@@ -36,28 +36,21 @@ class App:
                 raise SyntaxError('Error: Unexpected keys')
     
     def __write_line(self, path: str, string: str):
-        with open(path, 'w+') as cfg:
-            cfg.write(string)
+        with open(path, 'a') as f:
+            f.write(string)
 
     def __install_script(self, args: list[str]):
         self.__write_line(self.script_path, '#!/bin/bash\n\n')
-        self.__write_line(self.config_path, '[global]\n')
 
         for arg in args:
             key, value = arg.split(':')
             
             if key == '-s':
-                self.__write_line(self.config_path, f'XRDPSRV={value}\n')
+                SERVER: str = value
             elif key == '-n':
-                self.__write_line(self.config_path, f'XUSER={value}\n')
+                USERNAME: str = value
             elif key == '-p':
-                self.__write_line(self.config_path, f'XPWD={value}\n')
-
-        config = configparser.ConfigParser()
-        config.read(self.config_path)
-        SERVER: str = config['global']['XRDPSRV']
-        USERNAME: str = config['global']['XUSER']
-        PASSWORD: str = config['global']['XPWD']
+                PASSWORD: str = value
         
         os.system('apt update && apt -y upgrade && apt -y install freerdp2-x11 && apt -y install neovim')
 
@@ -68,8 +61,8 @@ class App:
     def __str__(self):
         hlpru = 'Запускать только с правами рута.\n' \
                 'Пример:\n' \
-                '$ su \\ python3 xfrdp -s:192.168.1.4 -n:UserName -p:Password -a:yes\n' \
-                '$ sudo python3 xfrdp -s:192.168.1.4 -n:UserName -p:Password -a:yes\n' \
+                '$ su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '\n' \
                 '-s - Установить ip адрес удаленного рабочего стола.\n' \
                 '-n - Установить имя пользователя удаленного рабочего стола.\n' \
@@ -78,8 +71,8 @@ class App:
 
         hlpen = 'Run only with root permissions.\n' \
                 'Example:\n' \
-                '$ su \\ python3 xfrdp -s:192.168.1.4 -n:UserName -p:Password -a:yes\n' \
-                '$ sudo python3 xfrdp -s:192.168.1.4 -n:UserName -p:Password -a:yes\n' \
+                '$ su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '\n' \
                 '-s - set rdp server ip.\n' \
                 '-n - set username for rdp server.\n' \
