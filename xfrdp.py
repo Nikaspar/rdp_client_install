@@ -65,7 +65,7 @@ class App:
     def __str__(self):
         hlpru = 'Запускать только с правами рута.\n' \
                 'Пример:\n' \
-                '$ su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '\n' \
                 '-s - Установить ip адрес удаленного рабочего стола.\n' \
@@ -75,7 +75,7 @@ class App:
 
         hlpen = 'Run only with root permissions.\n' \
                 'Example:\n' \
-                '$ su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '\n' \
                 '-s - set rdp server ip.\n' \
