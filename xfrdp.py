@@ -3,6 +3,11 @@ import os
 import sys
 
 
+"""
+For fedora
+"""
+
+
 class HelpCall(Exception):
     pass
 
@@ -11,7 +16,6 @@ class App:
     arguments: dict[str, str]
     key_list: list[str] = ['-s', '-n', '-p']
     install_path = os.path.join(os.sep, 'etc', 'profile.d')
-    config_path = os.path.join(install_path, 'xfrdp.ini')
     script_path = os.path.join(install_path, 'xfrdp.sh')
     
 
@@ -52,7 +56,7 @@ class App:
             elif key == '-p':
                 PASSWORD: str = value
         
-        os.system('apt update && apt -y upgrade && apt -y install freerdp2-x11 && apt -y install neovim')
+        os.system('dnf -y update && dnf -y install freerdp && dnf -y install neovim')
 
         self.__write_line(self.script_path, f"xfreerdp -toggle-fullscreen /sound:format:1 /microphone:format:1 /cert:tofu /v:'{SERVER}' /u:'{USERNAME}' /p:'{PASSWORD}' /f /video || gnome-session-quit --logout --force")
 
