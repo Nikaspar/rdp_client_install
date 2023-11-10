@@ -1,10 +1,12 @@
+#!/usr/bin/python3
+
 import locale
 import os
 import sys
 
 
 """
-For fedora
+For ubuntu
 """
 
 
@@ -56,17 +58,20 @@ class App:
             elif key == '-p':
                 PASSWORD: str = value
         
-        os.system('dnf -y update && dnf -y install freerdp && dnf -y install neovim')
+        os.system('apt -y update && apt -y upgrade && apt -y install freerdp2-x11')
+        
+        if os.path.exists(self.script_path):
+            os.system(f'rm -rf {self.script_path}')
 
         self.__write_line(self.script_path, f"xfreerdp -toggle-fullscreen /sound:format:1 /microphone:format:1 /cert:tofu /v:'{SERVER}' /u:'{USERNAME}' /p:'{PASSWORD}' /f /video || gnome-session-quit --logout --force")
 
-        print('DONE!')
+        print('DONE!\nReboot for profit!')
 
     def __str__(self):
         hlpru = 'Запускать только с правами рута.\n' \
                 'Пример:\n' \
-                '$ sudo su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
-                '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo su \\ ./xfrdp.py -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
+                '$ sudo ./xfrdp.py -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
                 '\n' \
                 '-s - Установить ip адрес удаленного рабочего стола.\n' \
                 '-n - Установить имя пользователя удаленного рабочего стола.\n' \
