@@ -1,103 +1,66 @@
-#!/usr/bin/python3
-
-import locale
+#!/usr/bin/env python3
 import os
-import sys
-
+from getpass import getpass, getuser
 
 """
-For ubuntu
+For Fedora 36+
 """
-
-
-class HelpCall(Exception):
-    pass
 
 
 class App:
-    arguments: dict[str, str]
-    key_list: list[str] = ['-s', '-n', '-p']
-    install_path = os.path.join(os.sep, 'etc', 'profile.d')
-    script_path = os.path.join(install_path, 'xfrdp.sh')
-    
+    def __init__(self) -> None:
+        LOCALUSER: str = getuser()
 
-    def __init__(self):
-        pass
+        if LOCALUSER != 'root':
+            print('Only for root!\n')
+            exit()
 
-    def set_args(self, args: list[str]):
-        args = args[1:]
+        LOCALUSER: str = input('Local user name: ')
+        SERVER: str = input('Remote ip: ')
+        RDP_USER: str = input('Remote login: ')
+        RDP_PASS: str = getpass('Remote password: ')
 
-        try:
-            self.__check_syntax(args)
-        except (SyntaxError, HelpCall) as e:
-            print('\n'.join((str(e), self.__str__())))
-        else:
-            self.__install_script(args)
+        autostart_dir: str = os.path.join(os.sep, 'home', f'{LOCALUSER}', '.autostart')
 
-    def __check_syntax(self, args: list[str]):
-        for arg in args:
-            if '-h' in args or len(args) == 1:
-                raise HelpCall('HELP')
-            elif not arg.startswith('-') or ':' not in arg or arg.split(':')[0] not in self.key_list:
-                raise SyntaxError('Error: Unexpected keys')
-    
-    def __write_line(self, path: str, string: str):
+        self.__create_script(autostart_dir, LOCALUSER, SERVER, RDP_USER, RDP_PASS)
+
+    def __write_line(self, path: str, string: str) -> None:
         with open(path, 'a') as f:
             f.write(string)
 
-    def __install_script(self, args: list[str]):
-        self.__write_line(self.script_path, '#!/bin/bash\n\n')
+    def __create_script(self, path: str, local_user, srv_ip: str, r_user: str, r_pass: str) -> None:
+        script_name: str = 'autorun-rdp.sh'
+        exec_path: str = os.path.join(path, script_name)
 
-        for arg in args:
-            key, value = arg.split(':')
-            
-            if key == '-s':
-                SERVER: str = value
-            elif key == '-n':
-                USERNAME: str = value
-            elif key == '-p':
-                PASSWORD: str = value
-        
-        os.system('apt -y update && apt -y upgrade && apt -y install freerdp2-x11')
-        
-        if os.path.exists(self.script_path):
-            os.system(f'rm -rf {self.script_path}')
+        if not os.path.exists(path):
+            os.mkdir(path)
 
-        self.__write_line(self.script_path, f"xfreerdp -toggle-fullscreen /sound:format:1 /microphone:format:1 /cert:tofu /v:'{SERVER}' /u:'{USERNAME}' /p:'{PASSWORD}' /f /video || gnome-session-quit --logout --force")
+        if os.path.exists(exec_path):
+            os.system(f'rm -rf {exec_path}')
 
-        print('DONE!\nReboot for profit!')
+        self.__write_line(exec_path, f"#!/bin/bash\n\nxfreerdp -toggle-fullscreen /sound:format:1 /microphone:format:1 /cert:tofu /v:'{srv_ip}' /u:'{r_user}' /p:'{r_pass}' /f /video || gnome-session-quit --logout --force")
 
-    def __str__(self):
-        hlpru = 'Запускать только с правами рута.\n' \
-                'Пример:\n' \
-                '$ sudo su \\ ./xfrdp.py -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
-                '$ sudo ./xfrdp.py -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
-                '\n' \
-                '-s - Установить ip адрес удаленного рабочего стола.\n' \
-                '-n - Установить имя пользователя удаленного рабочего стола.\n' \
-                '-p - Установить пароль пользователя удаленного рабочего стола.\n' \
-                '(ctrl+shift+f3 для использования терминала)\n'
+        os.system(f'chmod +x {exec_path}')
+        os.system(f'chown {local_user}:{local_user} {exec_path}')
 
-        hlpen = 'Run only with root permissions.\n' \
-                'Example:\n' \
-                '$ sudo su \\ python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
-                '$ sudo python3 xfrdp -s:\'192.168.1.4\' -n:\'UserName\' -p:\'Password\'\n' \
-                '\n' \
-                '-s - set rdp server ip.\n' \
-                '-n - set username for rdp server.\n' \
-                '-p - set user password for rdp server.\n' \
-                '(ctrl+shift+f3 for using terminal)\n'
-        
-        if locale.getlocale()[0] == 'ru_RU':
-            return hlpru
-        else:
-            return hlpen
+        self.__create_entry(local_user, script_name, exec_path)
 
+    def __create_entry(self, local_user, script_name, exec_path) -> None:
+        entry_path: str = os.path.join(os.sep, 'home', f'{local_user}', '.config', 'autostart', f'{script_name}.desktop')
 
-def main():
-    app = App()
-    app.set_args(sys.argv)
+        if not os.path.exists(os.path.join(os.sep, 'home', f'{local_user}', '.config', 'autostart')):
+            os.mkdir(os.path.join(os.sep, 'home', f'{local_user}', '.config', 'autostart'))
+
+        if os.path.exists(entry_path):
+            os.system(f'rm -rf {entry_path}')
+
+        self.__write_line(entry_path, f'[Desktop Entry]\nType=Application\nExec={exec_path}\nHidden=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nName=autorunrdp\nComment=')
+        os.system(f'chown {local_user}:{local_user} {entry_path}')
+
+        print('Script added to autostart\nBegin updateing system and installing freerdp...\n')
+        os.system('dnf -y update && dnf -y install freerdp')
+        print('\nDone!\nReboot for connect to RD')
 
 
 if __name__ == "__main__":
-    main()
+    App()
